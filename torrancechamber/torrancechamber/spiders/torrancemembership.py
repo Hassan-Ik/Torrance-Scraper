@@ -15,8 +15,6 @@ class TorrancemembershipSpider(CrawlSpider):
     rules = (
         Rule(LinkExtractor(allow=r'Items/'), callback='parse_item', follow=True),
     )
-
-    random_wait_list = [0.5, 0.75, 1, 1.25, 1.5]
     
     # For using current project path to open config.json file
     current_path = os.getcwd()
@@ -41,6 +39,7 @@ class TorrancemembershipSpider(CrawlSpider):
             return treat.as_array(result)
         end
     """
+    
     with open(config_file) as cf:
         con_f = json.load(cf)
     
@@ -81,13 +80,14 @@ class TorrancemembershipSpider(CrawlSpider):
                 
                 yield {
                     "company": company_div.xpath(".//h2/a/span/text()").extract_first(),
-                    "company_logo_url": company_div.xpath(".//div/div/span[@class='cn-image-style']/span/a/img/@src").extract_first(),
-                    "company_url": company_div.xpath(".//div/div/div/span[@class='cn-image-style']/span/a/@href").extract_first(),
+                    "company_logo_url": company_div.css("div > div > div > span.cn-image-style > span > a > img::attr(srcset)").extract_first(),
+                    "company_url": company_div.css("div > div > div > span.cn-image-style > span > a::attr(href)").extract_first(),
                     "company_contact": company_contact,
                     "company_address": company_address,
                     "company_telephone": company_div.xpath(".//span[@class='phone-number-block']/span/a/text()").extract_first(),
                     "company_email": company_div.xpath(".//span[@class='email-address-block']/span/span[3]/a/text()").extract_first(),
-                    "comapny_website": company_div.xpath(".//span[@class='link-block']/span/a/text()").extract_first()
+                    "company_website": company_div.xpath(".//span[@class='link-block']/span/a/text()").extract_first(),
+                    "company_category": company_div.css("::attr(class)").extract_first().split(" ")[-1]
                 }
             for i in range(2, no_of_pages):
                 url = response.request.url
@@ -103,6 +103,8 @@ class TorrancemembershipSpider(CrawlSpider):
     def parse_category_page(self, response):
         no_of_pages = self.get_no_of_pages(response)
         for company_div in response.xpath("//div[@data-entry-type = 'organization']"):
+            company_category = company_div.xpath("/@class")
+            print(company_category)
             company_contact = [
                 company_div.xpath(".//span[@class='cn-contact-block']/span[3]/text()").extract_first(), company_div.xpath(".//span[@class='cn-contact-block']/span[4]/text()").extract_first()
             ]
@@ -127,15 +129,16 @@ class TorrancemembershipSpider(CrawlSpider):
                 company_address = ' '.join(company_address)
             
             yield {
-                "company": company_div.xpath(".//h2/a/span/text()").extract_first(),
-                "company_logo_url": company_div.xpath(".//div/div/span[@class='cn-image-style']/span/a/img/@src").extract_first(),
-                "company_url": company_div.xpath(".//div/div/div/span[@class='cn-image-style']/span/a/@href").extract_first(),
-                "company_contact": company_contact,
-                "company_address": company_address,
-                "company_telephone": company_div.xpath(".//span[@class='phone-number-block']/span/a/text()").extract_first(),
-                "company_email": company_div.xpath(".//span[@class='email-address-block']/span/span[3]/a/text()").extract_first(),
-                "comapny_website": company_div.xpath(".//span[@class='link-block']/span/a/text()").extract_first()
-            }
+                    "company": company_div.xpath(".//h2/a/span/text()").extract_first(),
+                    "company_logo_url": company_div.css("div > div > div > span.cn-image-style > span > a > img::attr(srcset)").extract_first(),
+                    "company_url": company_div.css("div > div > div > span.cn-image-style > span > a::attr(href)").extract_first(),
+                    "company_contact": company_contact,
+                    "company_address": company_address,
+                    "company_telephone": company_div.xpath(".//span[@class='phone-number-block']/span/a/text()").extract_first(),
+                    "company_email": company_div.xpath(".//span[@class='email-address-block']/span/span[3]/a/text()").extract_first(),
+                    "company_website": company_div.xpath(".//span[@class='link-block']/span/a/text()").extract_first(),
+                    "company_category": company_div.css("::attr(class)").extract_first().split(" ")[-1]
+                }
         
         for i in range(2, no_of_pages):
             url = response.request.url
@@ -171,13 +174,14 @@ class TorrancemembershipSpider(CrawlSpider):
                 
                 yield {
                     "company": company_div.xpath(".//h2/a/span/text()").extract_first(),
-                    "company_logo_url": company_div.xpath(".//div/div/span[@class='cn-image-style']/span/a/img/@src").extract_first(),
-                    "company_url": company_div.xpath(".//div/div/div/span[@class='cn-image-style']/span/a/@href").extract_first(),
+                    "company_logo_url": company_div.css("div > div > div > span.cn-image-style > span > a > img::attr(srcset)").extract_first(),
+                    "company_url": company_div.css("div > div > div > span.cn-image-style > span > a::attr(href)").extract_first(),
                     "company_contact": company_contact,
                     "company_address": company_address,
                     "company_telephone": company_div.xpath(".//span[@class='phone-number-block']/span/a/text()").extract_first(),
                     "company_email": company_div.xpath(".//span[@class='email-address-block']/span/span[3]/a/text()").extract_first(),
-                    "company_website": company_div.xpath(".//span[@class='link-block']/span/a/text()").extract_first()
+                    "company_website": company_div.xpath(".//span[@class='link-block']/span/a/text()").extract_first(),
+                    "company_category": company_div.css("::attr(class)").extract_first().split(" ")[-1]
                 }
 
     def get_no_of_pages(self, response):
